@@ -1,0 +1,17 @@
+# Microsoft Developer Studio Generated Dependency File, included by lsdsk.mak
+
+.\lsdsk.cpp : \
+	".\version.h"\
+	{$(INCLUDE)}"debug.h"\
+	{$(INCLUDE)}"getopt.h"\
+	{$(INCLUDE)}"Optimize.h"\
+	{$(INCLUDE)}"Stackwalker.h"\
+	{$(INCLUDE)}"SystemMessage.h"\
+	{$(INCLUDE)}"ver_defaults.h"\
+	
+
+.\lsdsk.rc : \
+	".\lsdsk.ico"\
+	".\version.h"\
+	{$(INCLUDE)}"ver_defaults.h"\
+	
