@@ -2,7 +2,7 @@
 
 $Id$
 
-Copyright (c) 2005-2006 Ross Smith II (http://smithii.com). All rights reserved.
+Copyright (c) 2005-2007 Ross Smith II (http://smithii.com). All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of version 2 of the GNU General Public License
@@ -201,6 +201,24 @@ static void usage() {
 "-V | --version     Show version and copyright information and quit\n"
 "-? | --help        Show this help message and quit\n"
 );
+}
+
+char *last_error() {
+  int last_error = GetLastError();
+  static char buf[2048];
+  if (FormatMessage(
+    FORMAT_MESSAGE_FROM_SYSTEM |
+    FORMAT_MESSAGE_IGNORE_INSERTS,
+    NULL,
+    last_error,
+    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+    (LPTSTR) &buf,
+    sizeof(buf),
+    NULL
+    ) == 0) {
+      _snprintf(buf, sizeof(buf), "Unknown Windows error %d", last_error);
+  }
+  return buf;
 }
 
 /* @todo move to shared lib */
@@ -817,13 +835,6 @@ int main(int argc, char **argv) {
 
 	printf("\n");
 
-//	USE_INFO_2 ui2[26];
-
-	unsigned char *BufPtr = NULL;
-	DWORD EntriesRead = 0;
-	DWORD TotalEntries = 0;
-	DWORD ResumeHandle = NULL;
-
 	for (int i = 0; i < 26; ++i) {
 		char c = 'A' + i;
 		drive[i].letter = c;
@@ -842,9 +853,16 @@ int main(int argc, char **argv) {
 	StringList freelist;
 
 	while (1) {
+	//	USE_INFO_2 ui2[26];
+
+		unsigned char *BufPtr = NULL;
+		DWORD EntriesRead = 0;
+		DWORD TotalEntries = 0;
+		DWORD ResumeHandle = NULL;
+
 		NET_API_STATUS rv3 = NetUseEnum(
-			NULL,	// LMSTR UncServerName,
-			2,		// DWORD Level,
+			NULL,					// LMSTR UncServerName,
+			2,						// DWORD Level,
 			&BufPtr,
 			MAX_PREFERRED_LENGTH,	// DWORD PreferedMaximumSize,
 			&EntriesRead,
@@ -852,6 +870,10 @@ int main(int argc, char **argv) {
 			&ResumeHandle
 		);
 		if (rv3 != NERR_Success) {
+			fprintf(stderr, "%s\n", last_error());
+			if (BufPtr) {
+				NetApiBufferFree(BufPtr);
+			}
 			break;
 		}
 
@@ -891,6 +913,10 @@ int main(int argc, char **argv) {
 			p += sizeof(USE_INFO_2);
 		}
 
+		if (BufPtr) {
+			NetApiBufferFree(BufPtr);
+		}
+
 		if (!ResumeHandle)
 			break;
 	}
@@ -909,11 +935,11 @@ int main(int argc, char **argv) {
 			case DRIVE_UNKNOWN: // 	The drive type cannot be determined.
 			case DRIVE_NO_ROOT_DIR: // 	The root path is invalid, for example, no volume is mounted at the path.
 			case DRIVE_REMOVABLE: // 	The drive is a type that has removable media, for example, a floppy drive or removable hard disk.
-			case DRIVE_REMOTE: // 	The drive is a remote (network) drive.
 			case DRIVE_CDROM: // 	The drive is a CD-ROM drive.
 			case DRIVE_RAMDISK: // 	The drive is a RAM disk.
 				drive[i].type = types[rv];
 				break;
+			case DRIVE_REMOTE: // 	The drive is a remote (network) drive.
 			case DRIVE_FIXED: // 	The drive is a type that cannot be removed, for example, a fixed hard drive.
 				drive[i].type = types[rv];
 
@@ -922,13 +948,13 @@ int main(int argc, char **argv) {
 					if (strstr(buf, "RAM")) {
 						drive[i].type = types[DRIVE_RAMDISK];
 					}
-					if (strchr(buf, ':')) {
-						drive[i].type = types[DRIVE_SUBST];
-					}
 					if (drive[i].name.length() == 0) {
 						drive[i].name = buf;
 						if (drive[i].name.substr(0, 3) == "\\??")
 							drive[i].name = drive[i].name.substr(4);
+					}
+					if (strcspn(drive[i].name.c_str(), ":") == 1) {
+						drive[i].type = types[DRIVE_SUBST];
 					}
 				}
 				break;

@@ -1,5 +1,9 @@
 lsdsk changelog
 
+Version 1.4 - 04 Apr 07:
+
+	Better error reporting
+
 Version 1.3 - 12 Jul 06:
 
 	Standardized version information across all programs

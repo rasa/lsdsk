@@ -1,5 +1,5 @@
-lsdsk - Version 1.3 - Jul 19 2006
-Copyright (c) 2005-2006 Ross Smith II (http://smithii.com) All Rights Reserved
+lsdsk - Version 1.4 - Apr 04 2007
+Copyright (c) 2005-2007 Ross Smith II (http://smithii.com) All Rights Reserved
 
 ------------------------------------------------------------------------------
 
