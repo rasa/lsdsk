@@ -1,5 +1,15 @@
 lsdsk changelog
 
+Version 1.5 - 26 Sep 11
+
+	Updated to Visual Studio 2010 Express
+	Added option: -A | --all Display both mounted and unmounted drives
+	Added option: -b | --bus Display device bus type (USB, 1394, etc.
+	Fixed crash for 'net use \\host\ipc$' type shares
+	Trimed file system value to width of field
+	Changed -k to show size suffix as lowercase
+	Display volume in name field if volume option not selected, or name is blank
+
 Version 1.4 - 04 Apr 07:
 
 	Better error reporting

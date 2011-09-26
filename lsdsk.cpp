@@ -2,7 +2,7 @@
 
 $Id$
 
-Copyright (c) 2005-2007 Ross Smith II (http://smithii.com). All rights reserved.
+Copyright (c) 2005-2011 Ross Smith II (http://smithii.com). All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of version 2 of the GNU General Public License
@@ -19,8 +19,6 @@ General Public License for more details.
 
 todo:
 fix size of 10.0
-default is -t
-then add -A | -all
 
 bit  	bit  	0 or 1
 byte 	B 	8 bits
@@ -46,7 +44,7 @@ exabyte (decimal) 	EB 	1000 petabytes
 
 source: http://www.t1shopper.com/tools/calculate/
 
-to do:
+.to do:
 disk space is all wrong
 1 - 9.9 > 9.9
 10-999  > 999
@@ -70,22 +68,24 @@ Available: F: G: I: K: Y:
 
 #include <windows.h>
 #include <stdio.h>
-#include <atlbase.h> // required for Stackwalker
+//#include <atlbase.h> // required for Stackwalker
 #include <limits.h>
 #include <conio.h>
 #include <lm.h>
+#include <errno.h>
 
 #include <string>
 #include <map>
 #include <list>
 
-#include "Stackwalker.h"
-#include "Optimize.h"
+//#include "Stackwalker.h"
+//#include "Optimize.h"
 #include "SystemMessage.h"
 #include "debug.h"
 #include "getopt.h"
 
 #include "version.h"
+#include "WinIoCtl.h"
 
 #define APPNAME			VER_INTERNAL_NAME
 #define APPVERSION		VER_STRING2
@@ -93,25 +93,30 @@ Available: F: G: I: K: Y:
 
 static char *progname;
 
-static char *short_options = "ade:fi:kmnstuvV?";
+static char *short_options = "Aabde:fhi:kmnstuVv?";
 
 static struct option long_options[] = {
+	{"all",				no_argument,		0, 'A'},
 	{"available",		no_argument,		0, 'a'},
+	{"bus",				no_argument,		0, 'b'},
 	{"domain",			no_argument,		0, 'd'},
 	{"exclude",			required_argument,	0, 'e'},
-	{"file_system",		no_argument,		0, 'm'},
 	{"free",			no_argument,		0, 'f'},
+	{"help",			no_argument,		0, 'h'},
 	{"include",			required_argument,	0, 'i'},
+	{"file_system",		no_argument,		0, 'm'},
 	{"name",			no_argument,		0, 'n'},
 	{"size",			no_argument,		0, 's'},
 	{"type",			no_argument,		0, 't'},
 	{"used",			no_argument,		0, 'u'},
 	{"volume",			no_argument,		0, 'v'},
 
+	{"A",				no_argument,		0, 'A'},
 	{"a",				no_argument,		0, 'a'},
 	{"d",				no_argument,		0, 'd'},
 	{"e",				no_argument,		0, 'e'},
 	{"f",				no_argument,		0, 'f'},
+	{"h",				no_argument,		0, 'h'},
 	{"i",				no_argument,		0, 'i'},
 	{"m",				no_argument,		0, 'm'},
 	{"n",				no_argument,		0, 'n'},
@@ -120,18 +125,20 @@ static struct option long_options[] = {
 	{"u",				no_argument,		0, 'u'},
 	{"v",				no_argument,		0, 'v'},
 
+	{"avail",			no_argument,		0, 'a'},
+
 	{"kilobyte",		no_argument,		0, 'k'},
 	{"kilo",			no_argument,		0, 'k'},
 	{"k",				no_argument,		0, 'k'},
 
 	{"filesystem",		no_argument,		0, 'm'},
 	{"fs",				no_argument,		0, 'm'},
+
 	{"vol",				no_argument,		0, 'v'},
 
 	{"version",			no_argument,		0, 'V'},
 	{"V",				no_argument,		0, 'V'},
-	{"help",			no_argument,		0, '?'},
-	{"h",				no_argument,		0, '?'},
+
 	{"?",				no_argument,		0, '?'},
 	{NULL,				no_argument,		0, 0}
 };
@@ -148,6 +155,8 @@ struct _opt {
 	int volume;
 	int domain;
 	int available;
+	int all;
+	int bus;
 };
 
 const int OPT_FILE_SYSTEM	= 0;
@@ -157,6 +166,7 @@ const int OPT_SIZE			= 3;
 const int OPT_TYPE			= 4;
 const int OPT_USED			= 5;
 const int OPT_VOLUME		= 6;
+const int OPT_BUS			= 7;
 
 typedef struct _opt Opt;
 
@@ -176,6 +186,8 @@ Opt opt = {
 	1,	// volume
 	1,  // domain
 	0,	// available
+	0,  // all;
+	1,  // bus;
 };
 
 static void usage() {
@@ -186,18 +198,20 @@ static void usage() {
 	);
 /*2345678901234567890123456789012345678901234567890123456789012345678901234567890*/
 	printf(
-"-m | --file_system Display file system type (NTFS, FAT32, etc.)\n"
-"-f | --free        Display free space remaining on drive\n"
-"-n | --name        Display network share directory or subst'd directory\n"
-"-s | --size        Display total size of drive\n"
 "-t | --type        Display type of drive\n"
-"-u | --used        Display used space on drive\n"
-"-d | --domain      Display domain and username for network shares\n"
 "-v | --volume      Display volume name of drive\n"
+"-u | --used        Display used space on drive\n"
+"-f | --free        Display free space remaining on drive\n"
+"-s | --size        Display total size of drive\n"
+"-m | --file_system Display file system type (NTFS, FAT32, etc.)\n"
+"-b | --bus         Display device bus type (USB, 1394, etc.)\n"
+"-n | --name        Display network share directory or subst'd directory\n"
+"-d | --domain      Display domain and username for network shares\n"
 "-e | --exclude d:  Exclude drive d:\n"
 "-i | --include d:  Include drive d: (and exclude all others)\n"
 "-k | --kilobyte    Use 1024 for a kilobyte (K) instead of 1000\n"
-"-a | --available   Display available drive letters (default is off)\n"
+"-a | --available   Display available drive letters afterwards\n"
+"-A | --all         Display both mounted and unmounted drives\n"
 "-V | --version     Show version and copyright information and quit\n"
 "-? | --help        Show this help message and quit\n"
 );
@@ -245,6 +259,7 @@ public:
 	std::string letter;
 	std::string root;
 	std::string type;
+	std::string bus;
 	std::string volume;
 	std::string name;
 	std::string file_system;
@@ -258,10 +273,9 @@ DriveInfo drive[26];
 
 const int DRIVE_OTHER = -1;
 const int DRIVE_SUBST = -2;
-const int DRIVE_USB = -3;
 
 static void reset_options() {
-	static option_seen = 0;
+	static int option_seen = 0;
 
 	if (option_seen)
 		return;
@@ -276,6 +290,9 @@ static void reset_options() {
 	opt.used = 0;
 	opt.volume = 0;
 	opt.domain = 0;
+	opt.available = 0;
+	opt.all = 0;
+	opt.bus = 0;
 }
 
 /*
@@ -376,7 +393,7 @@ std::string int64tostr(ULARGE_INTEGER ui, int kilo) {
 
 	double kd = (signed) kilobyte;
 
-	int indexes = strlen(suffixes);
+	int indexes = (int) strlen(suffixes);
 
 	for (int index = 0; index < indexes; ++index) {
 /*
@@ -386,7 +403,10 @@ std::string int64tostr(ULARGE_INTEGER ui, int kilo) {
 */
 		if (ui.QuadPart < KILOBYTE) {
 			char suffix = suffixes[index];
-			unsigned int n = ui.QuadPart;
+			if (kilo) {
+				suffix = tolower(suffix);
+			}
+			unsigned int n = (unsigned int) ui.QuadPart;
 			sprintf(buf, "%3d%c", n, suffix);
 			s = buf;
 			return s;
@@ -394,10 +414,13 @@ std::string int64tostr(ULARGE_INTEGER ui, int kilo) {
 
 		if (ui.QuadPart < KILOBYTE * 10) {
 			char suffix = suffixes[index + 1];
-			unsigned int n = ui.QuadPart;
+			if (kilo) {
+				suffix = tolower(suffix);
+			}
+			unsigned int n = (unsigned int) ui.QuadPart;
 			double d = n;
 //printf("\nn=%d d=%15.5f\n", n, d);
-			d /= 1000.0 + 0.499999;
+			d /= 1000.0 + 0.49999999999;
 //printf("\nn=%d d=%15.5f\n", n, d);
 			sprintf(buf, "%3.1f%c", d, suffix);
 			s = buf;
@@ -411,7 +434,7 @@ std::string int64tostr(ULARGE_INTEGER ui, int kilo) {
 }
 
 static void set_option(int *o, char *optarg) {
-	static seen_option = 0;
+	static int seen_option = 0;
 
 	if (!seen_option) {
 		++seen_option;
@@ -423,6 +446,9 @@ static void set_option(int *o, char *optarg) {
 		opt.used = 0;
 		opt.volume = 0;
 		opt.domain = 0;
+		opt.available = 0;
+		opt.all = 0;
+		opt.bus = 0;
 	}
 	*o = 1;
 }
@@ -591,7 +617,8 @@ static int process_envvar(char *envvar) {
 }
 
 int process_options(int argc, char **argv) {
-	static seen_include = 0;
+	static int seen_include = 0;
+	char *cpu;
 	int i;
 
 	opterr = 0;
@@ -615,6 +642,14 @@ int process_options(int argc, char **argv) {
 		switch (c) {
 			case 'a':
 				opt.available = 1;
+				break;
+
+			case 'A':
+				opt.all = 1;
+				break;
+
+			case 'b':
+				set_option(&opt.bus, optarg);
 				break;
 
 			case 'd':
@@ -687,7 +722,16 @@ int process_options(int argc, char **argv) {
 				break;
 
 			case 'V': // version
-				printf("%s - Version %s - %s\n", APPNAME, APPVERSION, __DATE__);
+#if _WIN64 || __amd64__ || __X86_64__
+				cpu = "64 bit";
+#else
+				cpu = "32 bit";
+#endif
+				printf("%s - Version %s - %s (%s version)\n", APPNAME, APPVERSION, __DATE__, cpu);
+#ifdef _DEBUG
+				printf("*** Debug Build ***\n");
+#endif
+
 				printf(APPCOPYRIGHT "\n\n");
 
 				printf(
@@ -717,13 +761,15 @@ int main(int argc, char **argv) {
 #ifdef _DEBUG_ALLOC
     InitAllocCheck();
 #endif
+	unsigned int i;
+
 	progname = basename(argv[0]);
 
-	int len = strlen(progname);
+	unsigned int len = (unsigned int) strlen(progname);
 	if (len > 4 && _stricmp(progname + len - 4, ".exe") == 0)
 		progname[len - 4] = '\0';
 
-	process_envvar(_T("lsdsk"));
+	process_envvar("LSDSK");
 
 	process_options(argc, argv);
 	std::map<int,std::string> types;
@@ -737,9 +783,30 @@ int main(int argc, char **argv) {
 	types[DRIVE_RAMDISK]		= "RAMDisk";
 	types[DRIVE_OTHER]			= "Other";
 	types[DRIVE_SUBST]			= "Subst";
-	types[DRIVE_USB]			= "USB";
 
-	int width[6];
+	std::map<int, std::string> busTypes;
+
+    busTypes[BusTypeUnknown]	= "Unknown";
+    busTypes[BusTypeScsi]		= "SCSI";
+    busTypes[BusTypeAtapi]		= "ATAPI";
+    busTypes[BusTypeAta]		= "ATA";
+    busTypes[BusType1394]		= "1394";
+    busTypes[BusTypeSsa]		= "SSA";
+    busTypes[BusTypeFibre]		= "Fibre";
+    busTypes[BusTypeUsb]		= "USB";
+    busTypes[BusTypeRAID]		= "RAID";
+    busTypes[BusTypeiScsi]		= "iSCSI";
+    busTypes[BusTypeSas]		= "SAS";
+    busTypes[BusTypeSata]		= "SATA";
+    busTypes[BusTypeSd]			= "SD";
+    busTypes[BusTypeMmc]		= "MMC";
+    busTypes[BusTypeVirtual]	= "Virtual";
+    busTypes[BusTypeFileBackedVirtual] = "vFile";
+    busTypes[BusTypeMax] = "Max";
+
+	unsigned int width[8];
+
+// 9 + 15 + 4 + 4 + 4 + 5 + 20 + 7 = 79
 
 	width[OPT_TYPE]			= 9;
 	width[OPT_VOLUME]		= 15;
@@ -747,7 +814,8 @@ int main(int argc, char **argv) {
 	width[OPT_FREE]			= 4;
 	width[OPT_SIZE]			= 4;
 	width[OPT_FILE_SYSTEM]	= 5;
-	width[OPT_NAME]			= 29;
+	width[OPT_NAME]			= 20;
+	width[OPT_BUS]			= 7;
 
 	printf("Dr");
 
@@ -756,32 +824,37 @@ int main(int argc, char **argv) {
 		printf("%-*s", width[OPT_TYPE], "Type");
 	}
 
-	if (opt.volume){
+	if (opt.bus) {
+		printf(" ");
+		printf("%-*s", width[OPT_BUS], "Bus");
+	}
+
+	if (opt.volume) {
 		printf(" ");
 		printf("%-*s", width[OPT_VOLUME], "Volume");
 	}
 
-	if (opt.used){
+	if (opt.used) {
 		printf(" ");
 		printf("%*s", width[OPT_USED], "Used");
 	}
 
-	if (opt.free){
+	if (opt.free) {
 		printf(" ");
 		printf("%*s", width[OPT_FREE], "Free");
 	}
 
-	if (opt.size){
+	if (opt.size) {
 		printf(" ");
 		printf("%*s", width[OPT_SIZE], "Size");
 	}
 
-	if (opt.file_system){
+	if (opt.file_system) {
 		printf(" ");
 		printf("%-*s", width[OPT_FILE_SYSTEM], "FS");
 	}
 
-	if (opt.name){
+	if (opt.name) {
 		printf(" ");
 		printf("%-*s", width[OPT_NAME], "Name");
 	}
@@ -792,54 +865,60 @@ int main(int argc, char **argv) {
 
 	if (opt.type) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_TYPE]; ++i)
+		for (i = 0; i < width[OPT_TYPE]; ++i)
 			printf("-");
 	}
 
-	if (opt.volume){
+	if (opt.bus) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_VOLUME]; ++i)
+		for (i = 0; i < width[OPT_BUS]; ++i)
 			printf("-");
 	}
 
-	if (opt.used){
+	if (opt.volume) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_USED]; ++i)
+		for (i = 0; i < width[OPT_VOLUME]; ++i)
 			printf("-");
 	}
 
-	if (opt.free){
+	if (opt.used) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_FREE]; ++i)
+		for (i = 0; i < width[OPT_USED]; ++i)
 			printf("-");
 	}
 
-	if (opt.size){
+	if (opt.free) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_SIZE]; ++i)
+		for (i = 0; i < width[OPT_FREE]; ++i)
 			printf("-");
 	}
 
-	if (opt.file_system){
+	if (opt.size) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_FILE_SYSTEM]; ++i)
+		for (i = 0; i < width[OPT_SIZE]; ++i)
 			printf("-");
 	}
 
-
-	if (opt.name){
+	if (opt.file_system) {
 		printf(" ");
-		for (int i = 0; i < width[OPT_NAME]; ++i)
+		for (i = 0; i < width[OPT_FILE_SYSTEM]; ++i)
+			printf("-");
+	}
+
+	if (opt.name) {
+		printf(" ");
+		for (i = 0; i < width[OPT_NAME]; ++i)
 			printf("-");
 	}
 
 	printf("\n");
 
-	for (int i = 0; i < 26; ++i) {
+	for (i = 0; i < 26; ++i) {
 		char c = 'A' + i;
 		drive[i].letter = c;
 		drive[i].root = drive[i].letter + ":\\";
 		drive[i].type = "";
+		drive[i].bus = "";
 		drive[i].volume = "";
 		drive[i].name = "";
 		drive[i].file_system = "";
@@ -884,38 +963,42 @@ int main(int argc, char **argv) {
 			char arg[32767];
 			int len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_local, -1, arg, sizeof(arg), NULL, NULL);
 			char dri = toupper(arg[0]);
-			int index = dri - 'A';
+			if (dri >= 'A') {
+				int index = dri - 'A';
 
-//			ui2[index].ui2_local = ui->ui2_local;
-//			ui2[index].ui2_remote = ui->ui2_remote;
-//			ui2[index].ui2_username = ui->ui2_username;
-//			ui2[index].ui2_domainname = ui->ui2_domainname;
+	//			ui2[index].ui2_local = ui->ui2_local;
+	//			ui2[index].ui2_remote = ui->ui2_remote;
+	//			ui2[index].ui2_username = ui->ui2_username;
+	//			ui2[index].ui2_domainname = ui->ui2_domainname;
 
-			char *remote = (char*) malloc(wcslen(ui->ui2_remote) * sizeof(char));
-			len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_remote, -1, remote, sizeof(arg), NULL, NULL);
-			drive[index].name = remote;
+				char *remote = (char*) malloc(wcslen(ui->ui2_remote) * sizeof(char));
+				len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_remote, -1, remote, sizeof(arg), NULL, NULL);
+				drive[index].name = remote;
 
-			if (opt.domain) {
-				drive[index].name += " (";
+				if (opt.domain) {
+					drive[index].name += " (";
+					
+					if (ui->ui2_domainname) {
+						char *domainname = (char*) malloc(wcslen(ui->ui2_domainname) * sizeof(char));
+						len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_domainname, -1, domainname, sizeof(arg), NULL, NULL);
+						if (strstr(drive[index].name.c_str(), domainname) == 0)
+							drive[index].name = drive[index].name + domainname + "\\";
+					}
 
-				char *domainname = (char*) malloc(wcslen(ui->ui2_domainname) * sizeof(char));
-				len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_domainname, -1, domainname, sizeof(arg), NULL, NULL);
-				if (strstr(drive[index].name.c_str(), domainname) == 0)
-					drive[index].name = drive[index].name + domainname + "\\";
+					char *username = (char*) malloc(wcslen(ui->ui2_username) * sizeof(char));
+					len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_username, -1, username, sizeof(arg), NULL, NULL);
+					drive[index].name = drive[index].name + username;
 
-				char *username = (char*) malloc(wcslen(ui->ui2_username) * sizeof(char));
-				len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_username, -1, username, sizeof(arg), NULL, NULL);
-				drive[index].name = drive[index].name + username;
-
-				drive[index].name = drive[index].name + ")";
+					drive[index].name = drive[index].name + ")";
+				}
 			}
-
 			p += sizeof(USE_INFO_2);
 		}
 
 		if (BufPtr) {
 			NetApiBufferFree(BufPtr);
 		}
+
 
 		if (!ResumeHandle)
 			break;
@@ -945,13 +1028,24 @@ int main(int argc, char **argv) {
 
 				rv2 = QueryDosDevice(dr.c_str(), buf, sizeof(buf));
 				if (rv2) {
-					if (strstr(buf, "RAM")) {
+					if (strstr(buf, "RAM") || strstr(buf, "Ram") || strstr(buf, "ImDisk")) {
 						drive[i].type = types[DRIVE_RAMDISK];
 					}
 					if (drive[i].name.length() == 0) {
 						drive[i].name = buf;
-						if (drive[i].name.substr(0, 3) == "\\??")
+						if (drive[i].name.substr(0, 3) == "\\??") {
 							drive[i].name = drive[i].name.substr(4);
+						}
+						std::string lanman = "\\Device\\LanmanRedirector";
+						int j = drive[i].name.find(lanman);
+						if (j >= 0) {
+							std::string p = drive[i].name.substr(lanman.length() + 1);
+							int k = p.find("\\");
+							if (k) {
+								p = "\\" + p.substr(k);
+							}
+							drive[i].name = p;
+						}
 					}
 					if (strcspn(drive[i].name.c_str(), ":") == 1) {
 						drive[i].type = types[DRIVE_SUBST];
@@ -967,7 +1061,67 @@ int main(int argc, char **argv) {
 				freelist.push_back(dr);
 //				printf("%-2s (free)\n", dr.c_str());
 			}
-			continue;
+			if (!opt.all) {
+				continue;
+			}
+		}
+
+		if (drive[i].type == types[DRIVE_REMOVABLE]) {
+			// see http://msdn.microsoft.com/en-us/library/aa364939.aspx
+			// szPath without trailing backslash like
+			//  "\\\\.\\X:"
+			//  "\\\\\?\\Volume{433619ed-c6ea-11d9-a3b2-806d6172696f}
+			//  "\\\\.\\PhysicalDrive0"
+
+			std::string szPath = "\\\\.\\" + dr;
+
+			HANDLE hDevice = CreateFile(szPath.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
+										NULL, OPEN_EXISTING, 0, NULL);
+
+			if ( hDevice != INVALID_HANDLE_VALUE ) {
+
+				DWORD dwOutBytes = 0;           // IOCTL output length
+				STORAGE_PROPERTY_QUERY Query;   // input param for query
+
+				// specify the query type
+				Query.PropertyId = StorageDeviceProperty;
+				Query.QueryType = PropertyStandardQuery;
+
+				char OutBuf[1024] = {0};  // good enough, usually about 100 bytes
+				PSTORAGE_DEVICE_DESCRIPTOR pDevDesc = (PSTORAGE_DEVICE_DESCRIPTOR)OutBuf;
+				pDevDesc->Size = sizeof(OutBuf);
+
+				// Query using IOCTL_STORAGE_QUERY_PROPERTY 
+				BOOL res = DeviceIoControl(hDevice,                     // device handle
+							 IOCTL_STORAGE_QUERY_PROPERTY,             // info of device property
+							 &Query, sizeof(STORAGE_PROPERTY_QUERY),  // input data buffer
+							 pDevDesc, pDevDesc->Size,               // output data buffer
+							 &dwOutBytes,                           // out's length
+							 (LPOVERLAPPED)NULL);
+
+				CloseHandle(hDevice);
+
+				if ( res ) {
+					// here we are
+					if (pDevDesc->BusType) {
+						drive[i].bus = busTypes[pDevDesc->BusType];
+					}
+				}
+			}
+		}
+
+		printf("%-2s", dr.c_str());
+
+		if (opt.type) {
+			printf(" ");
+			printf("%-*s", width[OPT_TYPE], drive[i].type.c_str());
+		}
+
+		if (rv == DRIVE_NO_ROOT_DIR) {
+			if (!opt.all) {
+				printf("\n");
+				continue;
+			}
 		}
 
 		char VolumeNameBuffer[MAX_PATH + 1];;
@@ -988,67 +1142,107 @@ int main(int argc, char **argv) {
 		);
 
 		if (b) {
-			drive[i].volume = VolumeNameBuffer;
-			drive[i].file_system = FileSystemNameBuffer;
+			drive[i].volume = str_trim(VolumeNameBuffer);
+			drive[i].file_system = str_trim(FileSystemNameBuffer);
+			if (drive[i].file_system.length() > width[OPT_FILE_SYSTEM]) {
+				drive[i].file_system = drive[i].file_system.substr(0, width[OPT_FILE_SYSTEM]);
+			}
 		}
+
+		LPCTSTR lpDirectoryName = drive[i].root.c_str();
 
 		ULARGE_INTEGER FreeBytesAvailable;
 		ULARGE_INTEGER TotalNumberOfBytes;
 		ULARGE_INTEGER TotalNumberOfFreeBytes;
 
-		b = GetDiskFreeSpaceEx(
-			drive[i].root.c_str(),
-			&FreeBytesAvailable,
-			&TotalNumberOfBytes,
-			&TotalNumberOfFreeBytes
-		);
+		FreeBytesAvailable.QuadPart = 0UL;
+		TotalNumberOfBytes.QuadPart = 0UL;
+		TotalNumberOfFreeBytes.QuadPart = 0UL;
 
-		if (b) {
-			drive[i].FreeBytesAvailable = FreeBytesAvailable;
-			drive[i].TotalNumberOfBytes = TotalNumberOfBytes;
-			drive[i].TotalNumberOfFreeBytes = TotalNumberOfFreeBytes;
+/*
+		HANDLE hnd = CreateFile(
+lpDirectoryName,
+0, // dwDesiredAccess,
+7, // dwShareMode,
+NULL, // SecurityAttributes,
+OPEN_EXISTING, // dwFlagsAndAttributes
+0, // dwFlagsAndAttributes,
+NULL // hTemplateFile
+);
+*/
+
+		bool getFreeSpace = drive[i].type != types[DRIVE_CDROM] || drive[i].volume.length() > 0;
+
+		if (getFreeSpace) {
+			b = GetDiskFreeSpaceEx(
+				lpDirectoryName,
+				&FreeBytesAvailable,
+				&TotalNumberOfBytes,
+				&TotalNumberOfFreeBytes
+			);
+
+			if (b) {
+				drive[i].FreeBytesAvailable = FreeBytesAvailable;
+				drive[i].TotalNumberOfBytes = TotalNumberOfBytes;
+				drive[i].TotalNumberOfFreeBytes = TotalNumberOfFreeBytes;
+			}
 		}
 
-		printf("%-2s", dr.c_str());
-
-		if (opt.type) {
+		if (opt.bus) {
 			printf(" ");
-			printf("%-*s", width[OPT_TYPE], drive[i].type.c_str());
+			printf("%-*s", width[OPT_BUS], drive[i].bus.c_str());
 		}
 
-		if (opt.volume){
+		if (opt.volume) {
 			printf(" ");
 			printf("%-*s", width[OPT_VOLUME], drive[i].volume.c_str());
 		}
 
-		if (opt.used){
+		if (opt.used) {
 			printf(" ");
 			ULARGE_INTEGER used;
 			used.QuadPart = drive[i].TotalNumberOfBytes.QuadPart - drive[i].TotalNumberOfFreeBytes.QuadPart;
 			std::string s = int64tostr(used, opt.kilo);
+			if (!getFreeSpace) {
+				s = "";
+			}
 			printf("%-*s", width[OPT_USED], s.c_str());
 		}
 
-		if (opt.free){
+		if (opt.free) {
 			printf(" ");
 			std::string s = int64tostr(drive[i].TotalNumberOfFreeBytes, opt.kilo);
+			if (!getFreeSpace) {
+				s = "";
+			}
 			printf("%-*s", width[OPT_FREE], s.c_str());
 		}
 
-		if (opt.size){
+		if (opt.size) {
 			printf(" ");
 			std::string s = int64tostr(drive[i].TotalNumberOfBytes, opt.kilo);
+			if (!getFreeSpace) {
+				s = "";
+			}
 			printf("%-*s", width[OPT_SIZE], s.c_str());
 		}
 
-		if (opt.file_system){
+		if (opt.file_system) {
 			printf(" ");
 			printf("%-*s", width[OPT_FILE_SYSTEM], drive[i].file_system.c_str());
 		}
 
-		if (opt.name){
+		if (opt.name) {
 			printf(" ");
-			printf("%-*s", width[OPT_NAME], drive[i].name.c_str());
+			if (!opt.volume && drive[i].name.find("\\Device") == 0 && drive[i].volume.length() > 0) {
+				printf("%-*s", width[OPT_NAME], drive[i].volume.c_str());
+			} else if (drive[i].name.length() > 0) {
+				printf("%-*s", width[OPT_NAME], drive[i].name.c_str());
+			} else if (!opt.volume && drive[i].volume.length() > 0) {
+				printf("%-*s", width[OPT_NAME], drive[i].volume.c_str());
+			} else if (!opt.type) {
+				printf("%-*s", width[OPT_NAME], drive[i].type.c_str());
+			}
 		}
 
 		printf("\n");
@@ -1057,7 +1251,7 @@ int main(int argc, char **argv) {
 	if (opt.available) {
 		printf("\n");
 		printf("Free: ");
-		int i = 0;
+		i = 0;
 		for (StringList::iterator it = freelist.begin(); it != freelist.end(); ++it) {
 			if (i++)
 				printf(" ");

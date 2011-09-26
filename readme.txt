@@ -1,25 +1,26 @@
-lsdsk - Version 1.4 - Apr 04 2007
-Copyright (c) 2005-2007 Ross Smith II (http://smithii.com) All Rights Reserved
+lsdsk - Version 1.5 - Sep 26 2011
+Copyright (c) 2005-2011 Ross Smith II (http://smithii.com) All Rights Reserved
 
 ------------------------------------------------------------------------------
 
 Usage: lsdsk [options]
 Options:
--m | --file_system Display file system format
--f | --free        Display free space remaining on drive
--n | --name        Display name/description of drive
--s | --size        Display total size of drive
 -t | --type        Display type of drive
--u | --used        Display used space on drive
--d | --domain      Display domain and username for network shares
 -v | --volume      Display volume name of drive
+-u | --used        Display used space on drive
+-f | --free        Display free space remaining on drive
+-s | --size        Display total size of drive
+-m | --file_system Display file system type (NTFS, FAT32, etc.)
+-b | --bus         Display device bus type (USB, 1394, etc.)
+-n | --name        Display network share directory or subst'd directory
+-d | --domain      Display domain and username for network shares
 -e | --exclude d:  Exclude drive d:
 -i | --include d:  Include drive d: (and exclude all others)
 -k | --kilobyte    Use 1024 for a kilobyte (K) instead of 1000
--e | --available   Display available drive letters (default is off)
+-a | --available   Display available drive letters afterwards
+-A | --all         Display both mounted and unmounted drives
 -V | --version     Show version and copyright information and quit
 -? | --help        Show this help message and quit
-
 ------------------------------------------------------------------------------
 
 Examples:
@@ -32,9 +33,9 @@ C: Fixed     example_c       7.1G 439M 7.1G NTFS  \Device\HarddiskVolume1
 D: Fixed     example_d        45G 2.1G  47G NTFS  \Device\HarddiskVolume3
 E: CD-ROM    EXAMPLEVOL      535M   0  535M CDFS
 F: Fixed     EXAMPLE_F       288K 131M 131M FAT32 \Device\HarddiskVolume2
-G: Removable usb_stick        28M 221M 249M NTFS
+G: Removable usb_stick        28M 221M 249M exFAT
 I: Subst     example_d        45G 2.1G  47G NTFS  D:\a\path\on\d
-M: Subst     example_c       7.1G 439M 7.1G NTFS  C:\Documents and Settings\ex\My Documents
+M: Subst     example_c       7.1G 439M 7.1G NTFS  C:\User\Example\Documents
 Y: Network   sharename       123M 456M 579M NTFS  \\servername\sharename (username)
 Z: Network   c$              177M 782M 959M NTFS  \\servername\c$ (DOMAIN\user)
 
@@ -52,6 +53,13 @@ Y: Network   \\servername\sharename (username)
 Z: Network   \\servername\c$ (DOMAIN\user)
 
 Free: A: H: J: K: L: N: O: P: Q: R: S: T: U: V: W: X:
+
+------------------------------------------------------------------------------
+
+C:\>set LSDSK=-tna -e b
+C:\>lsdsk
+
+(same as above)
 
 ------------------------------------------------------------------------------
 
