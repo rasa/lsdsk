@@ -20,10 +20,10 @@ CYGENV=MAKEFLAGS="" PATH=$(MSVC_DIR)/bin:$$PATH
 APP_ZIP?=$(APP)-$(VER)-win32.zip
 SRC_ZIP?=$(APP)-$(VER)-win32-src.zip
 ZIP?=zip
-ZIP_OPTS?=-9jquX
+ZIP_OPTS?=-9quX
 CWD=$(shell pwd)
-APP_FILES=Debug/$(APP).exe changelog.txt COPYING readme.txt
-SRC_FILES=$(APP_FILES) $(shell ls *.cpp *.c *.h *.hpp *.inl *.dsp *.dsw *.mak *.dep *.vcxproj Makefile 2>nul)
+APP_FILES=Release/$(APP).exe Debug/$(APP).exe changelog.txt COPYING readme.txt
+SRC_FILES=$(APP_FILES) $(shell ls *.cpp *.c *.h *.hpp *.inl *.dsp *.dsw *.mak *.dep *.vcxproj Makefile *.ico *.rc ../shared/shared-1.2-win32-src.zip 2>nul)
 
 .PHONY:	dist
 dist:	all $(APP_ZIP) $(SRC_ZIP)

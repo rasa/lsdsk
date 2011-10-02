@@ -18,7 +18,7 @@ General Public License for more details.
 #define VER_INTERNAL_NAME 		"lsdsk"
 #define	VER_FILE_DESCRIPTION	"List disks"
 #define VER_MAJOR				1
-#define VER_MINOR				5
-#define VER_STRING2				"1.5"
+#define VER_MINOR				6
+#define VER_STRING2				"1.6"
 
 #include "ver_defaults.h"

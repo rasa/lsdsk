@@ -1,5 +1,12 @@
 lsdsk changelog
 
+Version 1.6 - 02 Oct 11
+
+	Fixed crash if domain is null
+	Added Release version to zip files
+	Added .ico and .rc files to source zip file
+	Added shared lib to source zip file (unzip into lsdsk/../shared)
+	
 Version 1.5 - 26 Sep 11
 
 	Updated to Visual Studio 2010 Express

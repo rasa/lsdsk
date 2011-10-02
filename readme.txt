@@ -1,7 +1,8 @@
-lsdsk - Version 1.5 - Sep 26 2011
+lsdsk - Version 1.6 - Oct 02 2011
 Copyright (c) 2005-2011 Ross Smith II (http://smithii.com) All Rights Reserved
 
 ------------------------------------------------------------------------------
+To build, unzip the shared*.zip file to lsdsk/../shared
 
 Usage: lsdsk [options]
 Options:
@@ -39,24 +40,27 @@ M: Subst     example_c       7.1G 439M 7.1G NTFS  C:\User\Example\Documents
 Y: Network   sharename       123M 456M 579M NTFS  \\servername\sharename (username)
 Z: Network   c$              177M 782M 959M NTFS  \\servername\c$ (DOMAIN\user)
 
-C:\>lsdsk -tna -e b
-Dr Type      Name
--- --------- -----------------------------
-C: Fixed     \Device\HarddiskVolume1
-D: Fixed     \Device\HarddiskVolume3
-E: CD-ROM
-F: Fixed     \Device\HarddiskVolume2
-G: Removable
-I: Subst     D:\a\path\on\d
-M: Subst     C:\Documents and Settings\ex\My Documents
-Y: Network   \\servername\sharename (username)
-Z: Network   \\servername\c$ (DOMAIN\user)
+------------------------------------------------------------------------------
+
+C:\>lsdsk -na
+Dr Name
+-- -----------------------------
+B: RAMDisk
+C: example_c
+D: example_d
+E: EXAMPLEVOL      
+F: EXAMPLE_F
+G: usb_stick
+I: D:\a\path\on\d
+M: C:\User\Example\Documents
+Y: \\servername\sharename
+Z: \\servername\c$
 
 Free: A: H: J: K: L: N: O: P: Q: R: S: T: U: V: W: X:
 
 ------------------------------------------------------------------------------
 
-C:\>set LSDSK=-tna -e b
+C:\>set LSDSK=-na
 C:\>lsdsk
 
 (same as above)
