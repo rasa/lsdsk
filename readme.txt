@@ -27,18 +27,19 @@ Options:
 Examples:
 
 C:\>lsdsk
-Dr Type      Volume          Used Free Size FS    Name
--- --------- --------------- ---- ---- ---- ----- -----------------------------
-B: RAMDisk   RAMDisk         3.0K 1.0G 1.0G FAT   \Device\RAMDisk
-C: Fixed     example_c       7.1G 439M 7.1G NTFS  \Device\HarddiskVolume1
-D: Fixed     example_d        45G 2.1G  47G NTFS  \Device\HarddiskVolume3
-E: CD-ROM    EXAMPLEVOL      535M   0  535M CDFS
-F: Fixed     EXAMPLE_F       288K 131M 131M FAT32 \Device\HarddiskVolume2
-G: Removable usb_stick        28M 221M 249M exFAT
-I: Subst     example_d        45G 2.1G  47G NTFS  D:\a\path\on\d
-M: Subst     example_c       7.1G 439M 7.1G NTFS  C:\User\Example\Documents
-Y: Network   sharename       123M 456M 579M NTFS  \\servername\sharename (username)
-Z: Network   c$              177M 782M 959M NTFS  \\servername\c$ (DOMAIN\user)
+Dr Type      Bus     Volume          Used Free Size FS    Name
+-- --------- ------- --------------- ---- ---- ---- ----- -----------------------------
+B: RAMDisk           RAMDisk         3.0K 1.0G 1.0G FAT   \Device\RAMDisk
+C: Fixed             example_c       7.1G 439M 7.1G NTFS  \Device\HarddiskVolume1
+D: Fixed             example_d        45G 2.1G  47G NTFS  \Device\HarddiskVolume3
+E: CD-ROM            EXAMPLEVOL      535M   0  535M CDFS
+F: Fixed             EXAMPLE_F       288K 131M 131M FAT32 \Device\HarddiskVolume2
+G: Removable USB     usb_stick        28M 221M 249M exFAT
+H: Removable ATA     domain.com        0   42G  42G EXFS
+I: Subst             example_d        45G 2.1G  47G NTFS  D:\a\path\on\d
+M: Subst             example_c       7.1G 439M 7.1G NTFS  C:\User\Example\Documents
+Y: Network           sharename       123M 456M 579M NTFS  \\servername\sharename (username)
+Z: Network           c$              177M 782M 959M NTFS  \\servername\c$ (DOMAIN\user)
 
 ------------------------------------------------------------------------------
 

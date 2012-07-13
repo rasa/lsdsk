@@ -763,6 +763,8 @@ int main(int argc, char **argv) {
 #endif
 	unsigned int i;
 
+	SetErrorMode(SEM_NOOPENFILEERRORBOX);
+
 	progname = basename(argv[0]);
 
 	unsigned int len = (unsigned int) strlen(progname);

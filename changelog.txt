@@ -6,12 +6,13 @@ Version 1.6 - 02 Oct 11
 	Added Release version to zip files
 	Added .ico and .rc files to source zip file
 	Added shared lib to source zip file (unzip into lsdsk/../shared)
-	
+	Added support for ImDisk Virtual Disk Driver (
+
 Version 1.5 - 26 Sep 11
 
 	Updated to Visual Studio 2010 Express
 	Added option: -A | --all Display both mounted and unmounted drives
-	Added option: -b | --bus Display device bus type (USB, 1394, etc.
+	Added option: -b | --bus Display device bus type (USB, 1394, etc.)
 	Fixed crash for 'net use \\host\ipc$' type shares
 	Trimed file system value to width of field
 	Changed -k to show size suffix as lowercase
