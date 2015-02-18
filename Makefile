@@ -14,16 +14,13 @@
 
 VER?=$(shell perl -n -e '/define\s+VER_STRING2\s+"(.*)"/ && print $$1' version.h)
 APP?=$(shell perl -n -e '/define\s+VER_INTERNAL_NAME\s+"(.*)"/ && print $$1' version.h)
-VC98?=$(PROGRAMFILES)\\Microsoft Visual Studio\\VC98
-MSVC_DIR?=$(shell cygpath -u `cygpath -ds "$(VC98)"`)
-CYGENV=MAKEFLAGS="" PATH=$(MSVC_DIR)/bin:$$PATH
+APP_FILES=Release/$(APP).exe changelog.txt COPYING readme.txt
+SRC_FILES=$(APP_FILES) $(shell ls Makefile *.cpp *.dep *.dsp *.dsw *.h *.ico *.mak *.rc 2>/dev/null)
+
 APP_ZIP?=$(APP)-$(VER)-win32.zip
 SRC_ZIP?=$(APP)-$(VER)-win32-src.zip
 ZIP?=zip
-ZIP_OPTS?=-9quX
-CWD=$(shell pwd)
-APP_FILES=Release/$(APP).exe Debug/$(APP).exe changelog.txt COPYING readme.txt
-SRC_FILES=$(APP_FILES) $(shell ls *.cpp *.c *.h *.hpp *.inl *.dsp *.dsw *.mak *.dep *.vcxproj Makefile *.ico *.rc ../shared/shared-1.2-win32-src.zip 2>nul)
+ZIP_OPTS?=-9jquX
 
 .PHONY:	dist
 dist:	all $(APP_ZIP) $(SRC_ZIP)
@@ -40,7 +37,7 @@ $(SRC_ZIP):	$(SRC_FILES)
 
 .PHONY: install
 install: all
-	cp -pf Debug/$(APP).exe /cygdrive/c/bin
+	cp -pf Debug/$(APP).exe $(WINDIR)
 
 .PHONY:	distclean
 distclean:	clean

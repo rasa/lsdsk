@@ -1,17 +1,20 @@
 # Microsoft Developer Studio Generated Dependency File, included by lsdsk.mak
 
 .\lsdsk.cpp : \
-	".\version.h"\
+	{$(INCLUDE)}"basetsd.h"\
+	{$(INCLUDE)}"guiddef.h"\
+	{$(INCLUDE)}"lmjoin.h"\
+	{$(INCLUDE)}"reason.h"\
+	{$(INCLUDE)}"specstrings.h"\
+	{$(INCLUDE)}"stralign.h"\
+	{$(INCLUDE)}"tvout.h"\
 	{$(INCLUDE)}"debug.h"\
 	{$(INCLUDE)}"getopt.h"\
-	{$(INCLUDE)}"Optimize.h"\
-	{$(INCLUDE)}"Stackwalker.h"\
-	{$(INCLUDE)}"SystemMessage.h"\
+	{$(INCLUDE)}"systemmessage.h"\
 	{$(INCLUDE)}"ver_defaults.h"\
+	".\version.h"\
 	
 
 .\lsdsk.rc : \
 	".\lsdsk.ico"\
-	".\version.h"\
-	{$(INCLUDE)}"ver_defaults.h"\
 	

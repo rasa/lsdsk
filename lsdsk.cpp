@@ -60,6 +60,10 @@ Available: F: G: I: K: Y:
 
 */
 
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#endif
+
 #ifndef WIN32_LEAN_AND_MEAN
 # define WIN32_LEAN_AND_MEAN 1
 #endif
@@ -800,11 +804,21 @@ int main(int argc, char **argv) {
     busTypes[BusTypeiScsi]		= "iSCSI";
     busTypes[BusTypeSas]		= "SAS";
     busTypes[BusTypeSata]		= "SATA";
+#ifdef BusTypeSd
     busTypes[BusTypeSd]			= "SD";
+#endif
+#ifdef BusTypeMmc
     busTypes[BusTypeMmc]		= "MMC";
+#endif
+#ifdef BusTypeVirtual
     busTypes[BusTypeVirtual]	= "Virtual";
+#endif
+#ifdef BusTypeFileBackedVirtual
     busTypes[BusTypeFileBackedVirtual] = "vFile";
+#endif
+#ifdef BusTypeMax
     busTypes[BusTypeMax] = "Max";
+#endif
 
 	unsigned int width[8];
 
@@ -979,7 +993,7 @@ int main(int argc, char **argv) {
 
 				if (opt.domain) {
 					drive[index].name += " (";
-					
+
 					if (ui->ui2_domainname) {
 						char *domainname = (char*) malloc(wcslen(ui->ui2_domainname) * sizeof(char));
 						len = WideCharToMultiByte(CP_ACP, 0, ui->ui2_domainname, -1, domainname, sizeof(arg), NULL, NULL);
@@ -1083,6 +1097,7 @@ int main(int argc, char **argv) {
 			if ( hDevice != INVALID_HANDLE_VALUE ) {
 
 				DWORD dwOutBytes = 0;           // IOCTL output length
+#ifdef STORAGE_PROPERTY_QUERY
 				STORAGE_PROPERTY_QUERY Query;   // input param for query
 
 				// specify the query type
@@ -1093,7 +1108,7 @@ int main(int argc, char **argv) {
 				PSTORAGE_DEVICE_DESCRIPTOR pDevDesc = (PSTORAGE_DEVICE_DESCRIPTOR)OutBuf;
 				pDevDesc->Size = sizeof(OutBuf);
 
-				// Query using IOCTL_STORAGE_QUERY_PROPERTY 
+				// Query using IOCTL_STORAGE_QUERY_PROPERTY
 				BOOL res = DeviceIoControl(hDevice,                     // device handle
 							 IOCTL_STORAGE_QUERY_PROPERTY,             // info of device property
 							 &Query, sizeof(STORAGE_PROPERTY_QUERY),  // input data buffer
@@ -1109,6 +1124,7 @@ int main(int argc, char **argv) {
 						drive[i].bus = busTypes[pDevDesc->BusType];
 					}
 				}
+#endif
 			}
 		}
 
