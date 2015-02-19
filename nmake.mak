@@ -1,10 +1,10 @@
 all:
-	$(MAKE)/f lsdsk.mak CFG="lsdsk - Win32 Release"	all
-	$(MAKE)/f lsdsk.mak CFG="lsdsk - Win32 Debug"		all
+	$(MAKE) /f lsdsk.mak CFG="lsdsk - Win32 Release"	all
+	$(MAKE) /f lsdsk.mak CFG="lsdsk - Win32 Debug"		all
 
 clean:
-	$(MAKE)/f lsdsk.mak CFG="lsdsk - Win32 Release"	clean
-	$(MAKE)/f lsdsk.mak CFG="lsdsk - Win32 Debug"		clean
+	$(MAKE) /f lsdsk.mak CFG="lsdsk - Win32 Release"	clean
+	$(MAKE) /f lsdsk.mak CFG="lsdsk - Win32 Debug"		clean
 
 realclean: clean
 	-cmd /c del /s *.bak
