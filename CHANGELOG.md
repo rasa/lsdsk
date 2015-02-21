@@ -1,9 +1,10 @@
-## 1.7 (unreleased)
+## 1.7 (20-Feb-2015)
 
+  * Workaround buggy getopt implementation
   * Updated to Visual Studio 2013
   * Switch to MIT license
 
-## 1.6 (02 Oct 11)
+## 1.6 (02-Oct-2011)
 
   * Fixed crash if domain is null
   * Added Release version to zip files
@@ -11,7 +12,7 @@
   * Added shared lib to source zip file (unzip into lsdsk/../shared)
   * Added support for ImDisk Virtual Disk Driver (
 
-## 1.5 (26 Sep 11)
+## 1.5 (26-Sep-2011)
 
   * Updated to Visual Studio 2010 Express
   * Added option: -A | --all Display both mounted and unmounted drives
@@ -21,15 +22,15 @@
   * Changed -k to show size suffix as lowercase
   * Display volume in name field if volume option not selected, or name is blank
 
-## 1.4 (04 Apr 07)
+## 1.4 (04-Apr-2007)
 
   * Better error reporting
 
-## 1.3 (12 Jul 06)
+## 1.3 (12-Jul-2006)
 
   * Standardized version information across all programs
 
-## 1.2 (08 Apr 06)
+## 1.2 (08-Apr-2006)
 
   * Added option: -e | --exclude d:  Exclude drive d:
   * Added option: -i | --include d:  Include drive d: (and exclude all others)
@@ -37,13 +38,13 @@
   * Improved build scripts
   * Updated documentation
 
-## 1.1 (01 Mar 06)
+## 1.1 (01-Mar-2006)
 
   * Added option: -d | --domain Display domain and username for network shares
   * Added option: -k | --kilobyte Use 1024 for a kilobyte (K) instead of 1000
   * Added option: -e | --available Display available drive letters (default is off)
   * Fixed used/free/size amounts so they round correctly
 
-## 1.0 (18 Feb 06)
+## 1.0 (18-Feb-2006)
 
   * Initial release
