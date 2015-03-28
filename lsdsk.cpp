@@ -67,9 +67,6 @@ Available: F: G: I: K: Y:
 #include <map>
 #include <list>
 
-//#include "Stackwalker.h"
-//#include "Optimize.h"
-#include "SystemMessage.h"
 #include "debug.h"
 #include "getopt.h"
 
